@@ -4,6 +4,7 @@
 #include <mutex>
 #include <thread>
 #include "include/color.h"
+#include "include/game.h"
 
 Renderer::Renderer(Renderer &&s) :
                   screen_height(s.screen_height), screen_width(s.screen_width) {
@@ -65,12 +66,12 @@ void Renderer::Render() {
 
 void Renderer::_render() {
   while(_running) {
-    std::unique_lock<std::mutex> l(_mtx);
-    ++_frames;
-    l.unlock();
+    // std::unique_lock<std::mutex> l(_mtx);
+    // ++_frames;
+    // l.unlock();
 
     SDL_Event e;
-    if(SDL_PollEvent(&e) && e.type == SDL_QUIT) _running = false;
+    if(SDL_PollEvent(&e)) _game->Send(std::move(e));
 
     SDL_SetRenderDrawColor(sdl_renderer, 0x00, 0x05, 0x00, 0xFF);
     SDL_RenderClear(sdl_renderer);

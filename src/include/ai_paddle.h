@@ -17,7 +17,7 @@ private:
   std::mutex _mtx;
 
   static constexpr int _xstart{800 - _width - 10};
-  static  constexpr int _ystart{600 - _height};
+  static  constexpr int _ystart{600 - _height - 100};
 
 };
 

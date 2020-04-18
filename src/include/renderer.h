@@ -20,6 +20,7 @@ class Renderer {
   void AddDrawable(Interactive *i);
   void SetDrawable(std::vector<Interactive*> i);
   void ClearDrawable();
+  void SetGamePointer(Game *g) { _game = g; }
 
   void Render();
   void Stop() { _running = false; };
@@ -38,6 +39,7 @@ class Renderer {
   SDL_Renderer *sdl_renderer;
   std::vector<Interactive*> _drawable;
   std::vector<std::thread> _thread;
+  Game *_game;
   bool _running{true};
   std::mutex _mtx;
   int _frames{0};
