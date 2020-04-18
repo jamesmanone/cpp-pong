@@ -4,7 +4,8 @@ int Interactive::maxY = 0;
 int Interactive::maxX = 0;
 
 Interactive::~Interactive() {
-  for(auto &t : _thread) t.join();
+  Stop();
+  for(auto &t : _threads) t.join();
 }
 
 void Interactive::setXY(int x, int y) {

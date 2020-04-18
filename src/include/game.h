@@ -3,6 +3,7 @@
 
 #include "interactive.h"
 #include "ball.h"
+#include "ai_paddle.h"
 #include "renderer.h"
 #include "color.h"
 #include "message_queue.h"
@@ -12,6 +13,7 @@
 
 struct pieces {
   Ball *ball;
+  AIPaddle *aiPaddle;
 };
 
 class Game : std::enable_shared_from_this<Game> {

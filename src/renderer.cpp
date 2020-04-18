@@ -1,6 +1,8 @@
 #include "include/renderer.h"
 #include <iostream>
 #include <string>
+#include <mutex>
+#include <thread>
 #include "include/color.h"
 
 Renderer::Renderer(Renderer &&s) :
@@ -57,14 +59,18 @@ Renderer::~Renderer() {
 }
 
 void Renderer::Render() {
-  // _thread.emplace_back(std::thread(&Renderer::_render, this));
+  // _thread.emplace_back(std::thread(&Renderer::UpdateWindowTitle, this));
   _render();
 }
 
 void Renderer::_render() {
   while(_running) {
+    std::unique_lock<std::mutex> l(_mtx);
+    ++_frames;
+    l.unlock();
+
     SDL_Event e;
-    if(SDL_PollEvent(&e) && e.type == SDL_QUIT) break;
+    if(SDL_PollEvent(&e) && e.type == SDL_QUIT) _running = false;
 
     SDL_SetRenderDrawColor(sdl_renderer, 0x00, 0x05, 0x00, 0xFF);
     SDL_RenderClear(sdl_renderer);
@@ -75,8 +81,8 @@ void Renderer::_render() {
       Location l = draw->getLocation();
       Color c = draw->getColor();
 
-      // if(l.H() == 0) DrawCircle(l, c);  // circle
-      DrawRect(l, c);
+      if(l.H() == 0) DrawCircle(l, c);  // circle
+      else DrawRect(l, c);
     }
 
     SDL_RenderPresent(sdl_renderer);
@@ -84,33 +90,6 @@ void Renderer::_render() {
     std::this_thread::sleep_for(std::chrono::milliseconds(5));
   }
 
-
-  // Render food
-  // SDL_SetRenderDrawColor(sdl_renderer, 0xFF, 0xCC, 0x00, 0xFF);
-  // block.x = food.x * block.w;
-  // block.y = food.y * block.h;
-  // SDL_RenderFillRect(sdl_renderer, &block);
-
-  // // Render snake's body
-  // SDL_SetRenderDrawColor(sdl_renderer, 0xFF, 0xFF, 0xFF, 0xFF);
-  // for (SDL_Point const &point : snake.body) {
-  //   block.x = point.x * block.w;
-  //   block.y = point.y * block.h;
-  //   SDL_RenderFillRect(sdl_renderer, &block);
-  // }
-
-  // // Render snake's head
-  // block.x = static_cast<int>(snake.head_x) * block.w;
-  // block.y = static_cast<int>(snake.head_y) * block.h;
-  // if (snake.alive) {
-  //   SDL_SetRenderDrawColor(sdl_renderer, 0x00, 0x7A, 0xCC, 0xFF);
-  // } else {
-  //   SDL_SetRenderDrawColor(sdl_renderer, 0xFF, 0x00, 0x00, 0xFF);
-  // }
-  // SDL_RenderFillRect(sdl_renderer, &block);
-
-  // Update Screen
-  // SDL_RenderPresent(sdl_renderer);
 }
 
 void Renderer::DrawRect(Location l, Color c) {
@@ -125,46 +104,43 @@ void Renderer::DrawRect(Location l, Color c) {
   SDL_RenderFillRect(sdl_renderer, &rect);
 }
 
-// Circle drawing algo adapted from https://stackoverflow.com/questions/38334081/howto-draw-circles-arcs-and-vector-graphics-in-sdl (2nd answer)
+
 void Renderer::DrawCircle(Location l, Color c) {
   int c_x = l.X(),
       c_y = l.Y(),
-      r = l.W()/2,
-      diameter = r*2,
-      x = r-1, y = 0,
-      tx = 1,
-      ty = 1,
-      e = tx-diameter;
+      r = l.W()/2;
+    
+    SDL_SetRenderDrawColor(sdl_renderer, c.R(), c.G(), c.B(), c.A());
 
-  while(x >= y) {
-    SDL_RenderDrawPoint(sdl_renderer, c_x + x, c_y - y);
-    SDL_RenderDrawPoint(sdl_renderer, c_x + x, c_y + y);
-    SDL_RenderDrawPoint(sdl_renderer, c_x - x, c_y - y);
-    SDL_RenderDrawPoint(sdl_renderer, c_x - x, c_y + y);
-    SDL_RenderDrawPoint(sdl_renderer, c_x + y, c_y - x);
-    SDL_RenderDrawPoint(sdl_renderer, c_x + y, c_y + x);
-    SDL_RenderDrawPoint(sdl_renderer, c_x - y, c_y - x);
-    SDL_RenderDrawPoint(sdl_renderer, c_x - y, c_y + x);
+    // Solution borrowed from github gist https://gist.github.com/derofim/912cfc9161269336f722
+    for(double dy = 1; dy <= r; dy += 1) {
+      double dx = floor(sqrt((2.0 * r * dy) - (dy * dy)));
 
-    if (e <= 0)
-      {
-         ++y;
-         e += ty;
-         ty += 2;
-      }
-
-      if (e > 0)
-      {
-         --x;
-         tx += 2;
-         e += (tx - diameter);
-      }
-  }
+      SDL_RenderDrawLine(sdl_renderer, c_x - dx, c_y + dy - r, c_x + dx, c_y + dy - r);
+      SDL_RenderDrawLine(sdl_renderer, c_x - dx, c_y - dy + r, c_x + dx, c_y - dy + r);
+    }
 }
 
-void Renderer::UpdateWindowTitle(int score, int fps) {
-  std::string title{"Pong " + std::to_string(score) + " FPS: " + std::to_string(fps)};
-  SDL_SetWindowTitle(sdl_window, title.c_str());
+void Renderer::UpdateWindowTitle() {
+  std::chrono::high_resolution_clock::time_point last(std::chrono::high_resolution_clock::now());
+  while(_running) {
+  
+    std::unique_lock<std::mutex> l(_mtx);
+    auto now = std::chrono::high_resolution_clock::now();
+    int f = _frames;
+    _frames = 0;
+    l.unlock();
+
+    auto d = std::chrono::duration_cast<std::chrono::milliseconds>(now - last).count();
+    last = now;
+
+    int fps = d == 0 ? 0 : f / (d * 1000);
+
+    std::cout << "\rFPS: " << fps;
+    // std::string title{"Pong -   FPS: " + std::to_string(fps)};
+    // SDL_SetWindowTitle(sdl_window, title.c_str());
+    std::this_thread::sleep_for(std::chrono::milliseconds(3000));
+  }
 }
 
 void Renderer::SetDrawable(std::vector<Interactive*> i) {

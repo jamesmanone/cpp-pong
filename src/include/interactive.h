@@ -1,4 +1,4 @@
-#include "game.h"
+class Game; // Forward Declaration
 #include "SDL.h"
 #include "color.h"
 #include <memory>
@@ -19,11 +19,14 @@ public:
   Interactive() { }
   virtual ~Interactive();
 
-  static void SetMax(int x, int y) { maxX = x; maxY = y; }
+  void Stop() { _running = false; }
 
+  static void SetMax(int x, int y) { maxX = x; maxY = y; }
   void setGame(Game *g) { _game = g; }
+
   Color getColor() const { return _color; }
   Location getLocation() const { return _location; }
+  Location* getLocationPtr() { return &_location; }
   int PosX() const { return _location.X(); }
   int PosY() const  { return _location.Y(); }
 
@@ -39,8 +42,9 @@ protected:
   Location _location;
   std::chrono::high_resolution_clock::time_point _last;
   Color _color;
-  std::vector<std::thread> _thread;
+  std::vector<std::thread> _threads;
   Game* _game;
+  bool _running{true};
 
   static int maxX;
   static int maxY;

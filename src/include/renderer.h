@@ -1,5 +1,6 @@
 #include <memory>
 #include <thread>
+#include <mutex>
 #include "interactive.h"
 #ifndef RENDERER_H
 #define RENDERER_H
@@ -23,7 +24,7 @@ class Renderer {
   void Render();
   void Stop() { _running = false; };
 
-  void UpdateWindowTitle(int score, int fps);
+  void UpdateWindowTitle();
 
   int getScreenWidth() const { return (int)screen_width; }
   int getScreenHeight() const { return (int)screen_height; }
@@ -38,7 +39,8 @@ class Renderer {
   std::vector<Interactive*> _drawable;
   std::vector<std::thread> _thread;
   bool _running{true};
-
+  std::mutex _mtx;
+  int _frames{0};
 
   const std::size_t screen_width;
   const std::size_t screen_height;

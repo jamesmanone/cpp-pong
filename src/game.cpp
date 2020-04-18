@@ -2,6 +2,7 @@
 #include "include/interactive.h"
 #include "include/ball.h"
 #include "include/renderer.h"
+#include "include/ai_paddle.h"
 #include <memory>
 #include <vector>
 #include <iostream>
@@ -14,7 +15,10 @@ const Color Game::_c = Color(0x0F, 255, 0x0F, 0xFF);
 
 Game::Game(std::shared_ptr<Renderer> renderer) : _renderer(renderer) {
   _pieces.ball = new Ball(200, 200, _c, this);
+  _pieces.aiPaddle = new AIPaddle(_c, this, _pieces.ball->getLocationPtr());
+  _pieces.ball->AddPaddle(_pieces.aiPaddle->getLocationPtr());
   _p.emplace_back(_pieces.ball);
+  _p.emplace_back(_pieces.aiPaddle);
   _renderer->SetDrawable(_p);
   Interactive::setXY(_renderer->getScreenWidth(), renderer->getScreenHeight());
 }
