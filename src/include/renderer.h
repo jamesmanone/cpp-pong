@@ -23,12 +23,14 @@ class Renderer {
   void ClearDrawable();
   void SetGamePointer(Game *g) { _game = g; }
   void SetScoreFlag() { _newScore = true; }
+  void SetScreenSize(int x, int y) { screen_width = x, screen_height = y; }
 
   void Render();
   void Stop() { _running = false; };
 
   void UpdateWindowTitle();
 
+  bool Running() { return _running; }
   int getScreenWidth() const { return (int)screen_width; }
   int getScreenHeight() const { return (int)screen_height; }
 
@@ -47,8 +49,8 @@ class Renderer {
   std::mutex _mtx;
   int _frames{0};
 
-  const std::size_t screen_width;
-  const std::size_t screen_height;
+  std::size_t screen_width;
+  std::size_t screen_height;
 };
 
 #endif

@@ -6,16 +6,15 @@
 class Paddle : public Interactive {
 public:
   enum class Direction { kUp, kDown, kNone };
-  enum class Type { kPlayer, kComputer };
+  enum class Type { kComputer = 0, kPlayer };
   void move(Direction d) { _moving = d; }
-  // virtual void Act();
 protected:
   Paddle(Color c, Location l, Game *g) : Interactive(c, l, g) { }
   Direction _moving{Direction::kNone};
   void _move() override;
-  static constexpr int _width{20};
-  static constexpr int _height{75};
-  static constexpr double delta_y{0.27};
+  static constexpr float _width{0.01};
+  static constexpr float _height{0.1};
+  static constexpr double delta_y{0.0004};
 };
 
 #endif

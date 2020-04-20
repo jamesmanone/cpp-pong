@@ -16,8 +16,8 @@ private:
   void _ai();
   std::shared_ptr<Location> _ball;
 
-  static constexpr int _xstart{1024 - _width - 10};
-  static  constexpr int _ystart{600 - _height - 100};
+  static constexpr double _xstart{0.99 - _width};
+  static  constexpr double _ystart{0.66};
 
 };
 

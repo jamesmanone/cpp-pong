@@ -14,18 +14,18 @@ void AIPaddle::_ai() {
   
   auto t1 = std::chrono::high_resolution_clock::now();
   while(_running) {
-    float target;
+    float target = _location->Y() + (_location->H()/2), tolerance = 0.013;
     std::unique_lock<std::mutex> l(_mtx);
-    if(_ball && std::abs(_ball->X() - _location->X()) < 25 ) {
+    if(_ball && std::abs(_ball->X() - _location->X()) < .025 ) {
       float top =  _ball->Y() - _location->Y(),
-            bottom = _ball->Y() - _location->Y() + _location->H();
+            bottom = _ball->Y() - (_location->Y() + _location->H());
       target = std::abs(top) < std::abs(bottom) ? top : bottom;
     } else target = _location->Y() + (_location->H()/2);
 
     if(target > _ball->Y()) {  // paddle low
-      if(target == _location->Y() || target - _ball->Y() > 10) _moving = Direction::kUp;
+      if(target == _location->Y() ||  target - _ball->Y() > tolerance) _moving = Direction::kUp;
       else _moving = Direction::kNone;
-    } else if(target == _location->Y() + _location->H() || _ball->Y() - target > 10) _moving = Direction::kDown;
+    } else if(target == _location->Y() + _location->H() || _ball->Y() - target > tolerance) _moving = Direction::kDown;
       else _moving = Direction::kNone;
     l.unlock();
     std::this_thread::sleep_for(std::chrono::milliseconds(1));

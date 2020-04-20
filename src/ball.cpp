@@ -15,18 +15,17 @@ Ball& Ball::operator=(const Ball &&s) {
 }
 
 void Ball::Act() {
-
-  _last = std::chrono::high_resolution_clock::now();
   _threads.emplace_back(std::thread(&Ball::_move, this));
 }
 
 void Ball::_move() {
+  _reset(Paddle::Type::kPlayer);
   while(_running) {
     std::chrono::high_resolution_clock::time_point now = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double, std::milli> duration = now - _last;
 
     _last = now;
-    int r = _location->W()/2;
+    double r = _location->W()/2;
     double t = duration.count();
 
     _location->Move((veloX * t), (veloY * t));
@@ -40,10 +39,10 @@ void Ball::_move() {
       veloY *= -1;
     }
 
-    int p = checkPaddleCollision();
-    if(p != INT_MAX) {
+    double p = checkPaddleCollision();
+    if(std::abs(p - (double)INT_MAX) > 1 ) {
       veloX*=-1;
-      veloY = p * 0.01;
+      veloY = p * 0.013;
     }
 
     // SCORE!
@@ -59,7 +58,7 @@ void Ball::_move() {
   }
 }
 
-int Ball::checkPaddleCollision() {
+double Ball::checkPaddleCollision() {
   // Left and right edge of ball
   double rad = _location->W() / 2,
          x_r = _location->X() + rad,
@@ -68,13 +67,16 @@ int Ball::checkPaddleCollision() {
          bottom = top + (rad * 2);
 
   for(auto p : _paddles) {
-    if(p == nullptr) continue;
-    float l = p->X(), r = l + p->W();  // left and right side of paddle
-    if((std::abs(r - x_l) > 1.5) &&
-      (std::abs(l - x_r) > 1.5)) continue;  // away from paddle on x axis
+    if(!p) continue;
+    double l = p->X(), r = l + p->W();  // left and right side of paddle
+    if((std::abs(r - x_l) > 0.0014) &&
+      (std::abs(l - x_r) > 0.0014)) continue;  // away from paddle on x axis
 
-    else if( top > p->Y() + p->H() ||        // miss: below
-        bottom < p->Y()) continue;              // miss: above
+    else if(top > p->Y() + p->H() ||                      // miss: below
+            bottom < p->Y() ||                            // miss: above
+            (x_l < 0.2 && veloX > 0) ||                   // already bounced off l paddle
+            (x_r > Interactive::maxX - 0.2 && veloX < 0)  // already bounced off r paddle
+        ) continue;
 
     // HIT! Return distance from center of paddle
     else {
@@ -88,29 +90,30 @@ int Ball::checkPaddleCollision() {
 void Ball::_reset(Paddle::Type p) {
   veloY = 0;
   veloX = 0;
-  int i = p == Paddle::Type::kPlayer ? 1 : 0;
+  // int i = p == Paddle::Type::kPlayer ? 1 : 0;
   std::this_thread::sleep_for(std::chrono::milliseconds(1500));
 
-  int newX = p == Paddle::Type::kPlayer ? _paddles[i]->X() + _paddles[i]->W() + (_location->W()/2) : 
-                                          _paddles[i]->X() - (_location->W()/2);
+  // casting Player::Type to int results in the correct indecies for that paddle
+  double newX = p == Paddle::Type::kPlayer ? _paddles[(int)p]->X() + _paddles[(int)p]->W() + (_location->W()/2) : 
+                                          _paddles[(int)p]->X() - (_location->W()/2);
 
 
   _location->X(newX);
-  _location->Y(_paddles[i]->Y());
-  veloX = p == Paddle::Type::kPlayer ? 0.3 : -0.3;
-  _waitForPaddleMovement(i);
+  _location->Y(_paddles[(int)p]->Y());
+  veloX = p == Paddle::Type::kPlayer ? 0.0004 : -0.0004;
+  _waitForPaddleMovement((int)p);
 }
 
 void Ball::_waitForPaddleMovement(int i) {
-  int y = _paddles[i]->Y();
+  double y = _paddles[i]->Y();
   auto t1 = std::chrono::high_resolution_clock::now();
   std::lock_guard<std::mutex> l(_mtx);
-  while(_running && std::abs(y - _paddles[i]->Y()) < 3) {
+  while(_running && std::abs(y - _paddles[i]->Y()) < 0.00139) {
     std::this_thread::sleep_for(std::chrono::milliseconds(1));
     if(std::chrono::duration_cast<std::chrono::seconds>(std::chrono::high_resolution_clock::now() - t1).count() > 3) break;
   }
   if(!_paddles[i]) return;
-  veloY = _paddles[i]->Y() > y ? 0.25 : -0.25;
+  veloY = _paddles[i]->Y() > y ? 0.0003 : -0.0003;
   _location->Move(veloX*5, veloY*5);
   _last = std::chrono::high_resolution_clock::now();
 

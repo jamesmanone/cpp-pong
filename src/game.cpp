@@ -10,30 +10,29 @@
 #include <chrono>
 #include <thread>
 
-using std::cout;
 
 
 const Color Game::_c = Color(0x0F, 255, 0x0F, 0xFF);
 
 Game::Game(Renderer *renderer) : _renderer(renderer) {
   int w = _renderer->getScreenWidth(), h = _renderer->getScreenHeight();
-  Interactive::setXY(w, h);
+  // Interactive::setXY(w, h);
   _renderer->SetGamePointer(this);
-  _pieces.ball = std::make_shared<Ball>(200, 200, _c, this);
+  _pieces.ball = std::make_shared<Ball>(_c, this);
   _pieces.aiPaddle = std::make_shared<AIPaddle>(_c, this, _pieces.ball->getLocationPtr());
   _pieces.playerPaddle = std::make_shared<PlayerPaddle>(_c, this);
 
   _pieces.ball->AddPaddle(_pieces.aiPaddle->getLocationPtr());
   _pieces.ball->AddPaddle(_pieces.playerPaddle->getLocationPtr());
 
-  int n = 7, middle = w/2, height = h/n - 10, y = 5;
+  double n = 7, width = 0.01, middle = 0.5, height = 1/n - 0.02, y = 0.01;
 
   Color c = _c;
   --c;
 
   while(y < h) {
-    _pieces.decorations.emplace_back(std::make_shared<Drawable>(c, Location(middle, y, 10, height)));
-    y += h/n;
+    _pieces.decorations.emplace_back(std::make_shared<Drawable>(c, Location(middle - (width/2), y, width, height)));
+    y += 1/n;
   }
   
   std::vector<std::shared_ptr<Drawable>> d;
@@ -75,11 +74,12 @@ void Game::Score(Paddle::Type p) {
   else ++_computerScore;
   _renderer->SetScoreFlag();
 
-  std::cout << "\rPlayer: " << _playerScore << " Computer: " << _computerScore << std::flush;
+  // std::cout << "\rPlayer: " << _playerScore << " Computer: " << _computerScore << std::flush;
 }
 
 void Game::Monitor() {
   _threads.emplace_back(std::thread(&Game::_monitor, this));
+  // _threads.emplace_back(std::thread(&Game::_log, this));
 }
 
 void Game::Send(SDL_Event &&e) {
@@ -90,15 +90,31 @@ void Game::_monitor() {
   bool monitor{true};
   while(monitor) {
     SDL_Event e = _q.receive();
-    if(e.type == SDL_QUIT) {
+    if(e.type == SDL_QUIT || (e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_q)) {
       Stop();
       monitor = false;
       break;
-    } else if(e.type == SDL_KEYDOWN) {
+    } else if(e.type == SDL_WINDOWEVENT && e.window.event == SDL_WINDOWEVENT_SIZE_CHANGED) {
+      _renderer->SetScreenSize(e.window.data1, e.window.data2);
+    }else if(e.type == SDL_KEYDOWN) {
       if(e.key.keysym.sym == SDLK_UP) _pieces.playerPaddle->move(Paddle::Direction::kUp);
       else if(e.key.keysym.sym == SDLK_DOWN) _pieces.playerPaddle->move(Paddle::Direction::kDown);
     } else if(e.type == SDL_KEYUP && (e.key.keysym.sym == SDLK_UP || e.key.keysym.sym == SDLK_DOWN)) _pieces.playerPaddle->move(Paddle::Direction::kNone);
 
+  }
+}
+
+void Game::_log() {
+  std::shared_ptr<Location> ball = _pieces.ball->getLocationPtr(),
+                            c_p = _pieces.aiPaddle->getLocationPtr(),
+                            p_p = _pieces.playerPaddle->getLocationPtr();
+  while(_renderer->Running()) {
+
+    std::cout << "\rBall(" << std::to_string(ball->X()) << ", " << std::to_string(ball->Y())
+              << ") aiPaddle(" << std::to_string(c_p->X()) << ", " << std::to_string(c_p->Y())
+              << ") playerPaddle(" << std::to_string(p_p->X()) << ", " << std::to_string(p_p->Y())
+              << ")" << std::flush;
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
   }
 }
 

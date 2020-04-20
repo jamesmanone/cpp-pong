@@ -34,7 +34,7 @@ Renderer::Renderer(const std::size_t screen_width,
   // Create Window
   sdl_window = SDL_CreateWindow("PONG", SDL_WINDOWPOS_CENTERED,
                                 SDL_WINDOWPOS_CENTERED, screen_width,
-                                screen_height, 0);
+                                screen_height, SDL_WINDOW_RESIZABLE);
 
   if (nullptr == sdl_window || sdl_window == NULL) {
     std::cerr << "Window could not be created.\n";
@@ -78,7 +78,7 @@ void Renderer::_render() {
       Location l = draw->getLocation();
       Color c = draw->getColor();
 
-      if(l.H() == 0) DrawCircle(l, c);  // circle
+      if(l.H() == 0.0) DrawCircle(l, c);  // circle
       else DrawRect(l, c);
     }
     l.unlock();
@@ -90,10 +90,10 @@ void Renderer::_render() {
 
 void Renderer::DrawRect(Location l, Color c) {
   SDL_Rect rect;
-  rect.w = l.W();
-  rect.h = l.H();
-  rect.x = l.X();
-  rect.y = l.Y();
+  rect.w = l.W() * screen_width;
+  rect.h = l.H() * screen_height;
+  rect.x = l.X() * screen_width;
+  rect.y = l.Y() * screen_height;
   if(rect.h == 0) rect.h = rect.w;
 
   SDL_SetRenderDrawColor(sdl_renderer, c.R(), c.G(), c.B(), c.A());
@@ -102,9 +102,9 @@ void Renderer::DrawRect(Location l, Color c) {
 
 
 void Renderer::DrawCircle(Location l, Color c) {
-  int c_x = l.X(),
-      c_y = l.Y(),
-      r = l.W()/2;
+  int c_x = l.X() * screen_width,
+      c_y = l.Y() * screen_height,
+      r = (l.W() * screen_width)/2;
     
     SDL_SetRenderDrawColor(sdl_renderer, c.R(), c.G(), c.B(), c.A());
 

@@ -17,11 +17,13 @@ class Interactive : public Drawable {
 public:
   static void setXY(int x, int y);
   Interactive() { }
-  virtual ~Interactive();
+  virtual ~Interactive() {
+    Stop();
+    for(auto &t : _threads) t.join();
+  }
 
   virtual void Stop() { _running = false; }
 
-  static void SetMax(int x, int y) { maxX = x; maxY = y; }
   void setGame(Game *g) { _game = g; }
 
   virtual void Act() = 0;
@@ -39,8 +41,8 @@ protected:
   bool _running{true};
   std::mutex _mtx;
 
-  static int maxX;
-  static int maxY;
+  static constexpr double maxX{1};
+  static constexpr double maxY{1};
 };
 
 #endif

@@ -15,10 +15,10 @@ public:
   Location(const Location &s) : _x(s.X()), _y(s.Y()), _h(s.H()), _w(s.W()) { }
   Location &operator=(const Location &s);
   Location &operator=(const Location &&s);
-  int X() const { return (int)_x; }
-  int Y() const { return (int)_y; }
-  int W() const { return (int)_w; }
-  int H() const { return (int)_h; }
+  double X() const { return _x; }
+  double Y() const { return _y; }
+  double W() const { return _w; }
+  double H() const { return _h; }
 protected:
   void Move(double dx, double dy) { _x += dx; _y += dy; }
   void X(double x) { _x = x; }

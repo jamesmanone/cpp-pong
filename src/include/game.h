@@ -34,6 +34,7 @@ public:
   
 private:
   void _monitor();
+  void _log();
 
   Renderer *_renderer;
   pieces _pieces;

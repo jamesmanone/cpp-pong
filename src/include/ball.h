@@ -8,6 +8,7 @@
 class Ball : public Interactive {
 public:
   Ball() { }
+  Ball(Color c, Game *g) : Interactive(c, Location(startX, startY, diameter, 0), g) { }
   Ball(int x, int y, Color c) : Interactive(c, Location(x, y, diameter, 0)) { }
   Ball(int x, int y, Color c, Game *g) : Interactive(c, Location(x, y, diameter, 0), g) { }
   Ball &operator=(Ball &s);
@@ -17,15 +18,17 @@ public:
   void Act() override;
   void Stop() override;
 private:
-  int checkPaddleCollision();
+  double checkPaddleCollision();
   void _move() override;
   void _reset(Paddle::Type p);
   void _waitForPaddleMovement(int i);
 
   std::vector<std::shared_ptr<Location>> _paddles;
-  double veloX{0.3};
-  double veloY{0.25};
-  static constexpr int diameter{20};
+  static constexpr float startX{0.5};
+  static constexpr float startY{0.5};
+  double veloX{0.0};
+  double veloY{0.0};
+  static constexpr float diameter{0.02};
 };
 
 #endif

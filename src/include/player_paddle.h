@@ -7,8 +7,8 @@ public:
   PlayerPaddle(Color c, Game *g) : Paddle(c, Location(_xstart, _ystart, _width, _height), g) { }
   void Act() override;
 private:
-  static constexpr int _xstart{10};
-  static constexpr int _ystart{100};
+  static constexpr float _xstart{.01};
+  static constexpr float _ystart{0.33};
 };
 
 #endif
