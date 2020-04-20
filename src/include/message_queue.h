@@ -7,7 +7,7 @@
 #include <thread>
 
 
-// must be inline to prevent linker errors
+// member functions must be inline to prevent linker errors
 template<class T>
 class MessageQueue {
 public:

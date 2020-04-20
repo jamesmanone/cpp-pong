@@ -25,12 +25,11 @@ Renderer::Renderer(const std::size_t screen_width,
                   screen_height(screen_height) {
   // Initialize SDL
 
-  std::cout << "Resolution: " << screen_width << "x" << screen_height << std::endl;
 
   if (SDL_Init(SDL_INIT_VIDEO) < 0) {
     std::cerr << "SDL could not initialize.\n";
     std::cerr << "SDL_Error: " << SDL_GetError() << "\n";
-  } else std::cout << "Init\n";
+  }
 
   // Create Window
   sdl_window = SDL_CreateWindow("PONG", SDL_WINDOWPOS_CENTERED,
@@ -40,7 +39,7 @@ Renderer::Renderer(const std::size_t screen_width,
   if (nullptr == sdl_window || sdl_window == NULL) {
     std::cerr << "Window could not be created.\n";
     std::cerr << " SDL_Error: " << SDL_GetError() << "\n";
-  } else std::cout << "Window aquired at " << sdl_window << std::endl;
+  }
 
   // Create renderer
   sdl_renderer = SDL_CreateRenderer(sdl_window, -1, SDL_RENDERER_ACCELERATED);
@@ -49,35 +48,32 @@ Renderer::Renderer(const std::size_t screen_width,
   if (nullptr == sdl_renderer || sdl_renderer == NULL) {
     std::cerr << "Renderer could not be created.\n";
     std::cerr << "SDL_Error: " << SDL_GetError() << "\n";
-  } else std::cout << "Renderer aquired\n";
+  }
 }
 
 Renderer::~Renderer() {
-  std::cout << "Renderer destructor\n";
   for(auto &th : _thread) th.join();
   SDL_DestroyWindow(sdl_window);
   SDL_Quit();
 }
 
 void Renderer::Render() {
-  // _thread.emplace_back(std::thread(&Renderer::UpdateWindowTitle, this));
-  _render();
+  _render();  // All rendering MUST be on main thread
 }
 
 void Renderer::_render() {
   while(_running) {
-    // std::unique_lock<std::mutex> l(_mtx);
-    // ++_frames;
-    // l.unlock();
 
     SDL_Event e;
     if(SDL_PollEvent(&e)) _game->Send(std::move(e));
+    if(_newScore) UpdateWindowTitle();
 
     SDL_SetRenderDrawColor(sdl_renderer, 0x00, 0x05, 0x00, 0xFF);
     SDL_RenderClear(sdl_renderer);
 
     // Render all objects
 
+    std::unique_lock<std::mutex> l(_mtx);
     for(auto draw : _drawable) {
       Location l = draw->getLocation();
       Color c = draw->getColor();
@@ -85,9 +81,8 @@ void Renderer::_render() {
       if(l.H() == 0) DrawCircle(l, c);  // circle
       else DrawRect(l, c);
     }
-
+    l.unlock();
     SDL_RenderPresent(sdl_renderer);
-    // SDL_Delay(5);
     std::this_thread::sleep_for(std::chrono::milliseconds(5));
   }
 
@@ -123,34 +118,36 @@ void Renderer::DrawCircle(Location l, Color c) {
 }
 
 void Renderer::UpdateWindowTitle() {
-  std::chrono::high_resolution_clock::time_point last(std::chrono::high_resolution_clock::now());
-  while(_running) {
-  
-    std::unique_lock<std::mutex> l(_mtx);
-    auto now = std::chrono::high_resolution_clock::now();
-    int f = _frames;
-    _frames = 0;
-    l.unlock();
+  _newScore = false;
+  char title[101];
+  for(auto &p : title) p = ' ';
+  title[100] = 00;  // null terminator
+  title[48] = 'P';
+  title[49] = 'O';
+  title[50] = 'N';
+  title[51] = 'G';
 
-    auto d = std::chrono::duration_cast<std::chrono::milliseconds>(now - last).count();
-    last = now;
+  std::string p_s = std::to_string(_game->PlayerScore());
+  std::string c_s = std::to_string(_game->ComputerScore());
 
-    int fps = d == 0 ? 0 : f / (d * 1000);
+  if(p_s.size() == 1) title[1] = p_s[0];
+  else memcpy(&title, p_s.c_str(), p_s.size());
 
-    std::cout << "\rFPS: " << fps;
-    // std::string title{"Pong -   FPS: " + std::to_string(fps)};
-    // SDL_SetWindowTitle(sdl_window, title.c_str());
-    std::this_thread::sleep_for(std::chrono::milliseconds(3000));
-  }
+  if(c_s.size() == 1) title[99] = c_s[0];
+  else if(c_s.size() == 2) memcpy(&title[98], c_s.c_str(), 2);
+  else memcpy(&title[97], c_s.c_str(), 3);
+
+  SDL_SetWindowTitle(sdl_window, title);
 }
 
-void Renderer::SetDrawable(std::vector<Interactive*> i) {
-  _drawable.clear();
+void Renderer::SetDrawable(std::vector<std::shared_ptr<Drawable>> i) {
+  ClearDrawable();
+  std::lock_guard<std::mutex> l(_mtx);
   for(auto p : i) _drawable.emplace_back(p);
-  std::cout << _drawable.front()->getLocation().X() << std::endl;
 }
 
-// pointeres to drawable objects are not owned
+
 void Renderer::ClearDrawable() {
+  std::lock_guard<std::mutex> l(_mtx);
   _drawable.clear();
 }

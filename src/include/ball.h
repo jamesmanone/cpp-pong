@@ -1,7 +1,6 @@
 #include "interactive.h"
 #include <vector>
-// Forward Declaration
-class Game;
+#include "paddle.h"
 
 #ifndef BALL_H
 #define BALL_H
@@ -14,15 +13,18 @@ public:
   Ball &operator=(Ball &s);
   Ball &operator=(const Ball &&s);
 
-  void AddPaddle(Location *l) { _paddles.emplace_back(l); }
+  void AddPaddle(std::shared_ptr<Location> l) { _paddles.emplace_back(l); }
   void Act() override;
+  void Stop() override;
 private:
   int checkPaddleCollision();
   void _move() override;
+  void _reset(Paddle::Type p);
+  void _waitForPaddleMovement(int i);
 
-  std::vector<Location*> _paddles;
-  int veloX{10};
-  int veloY{10};
+  std::vector<std::shared_ptr<Location>> _paddles;
+  double veloX{0.3};
+  double veloY{0.25};
   static constexpr int diameter{20};
 };
 

@@ -1,12 +1,13 @@
 #include <memory>
 #include <thread>
 #include <mutex>
-#include "interactive.h"
+#include "drawable.h"
 #ifndef RENDERER_H
 #define RENDERER_H
 
 #include <vector>
 #include "SDL.h"
+class Game;
 
 
 
@@ -17,10 +18,11 @@ class Renderer {
   Renderer(Renderer &&s);
   ~Renderer();
 
-  void AddDrawable(Interactive *i);
-  void SetDrawable(std::vector<Interactive*> i);
+  void AddDrawable(std::shared_ptr<Drawable> i) { _drawable.emplace_back(i); }
+  void SetDrawable(std::vector<std::shared_ptr<Drawable>> i);
   void ClearDrawable();
   void SetGamePointer(Game *g) { _game = g; }
+  void SetScoreFlag() { _newScore = true; }
 
   void Render();
   void Stop() { _running = false; };
@@ -37,10 +39,11 @@ class Renderer {
 
   SDL_Window *sdl_window;
   SDL_Renderer *sdl_renderer;
-  std::vector<Interactive*> _drawable;
+  std::vector<std::shared_ptr<Drawable>> _drawable;
   std::vector<std::thread> _thread;
   Game *_game;
   bool _running{true};
+  bool _newScore{false};
   std::mutex _mtx;
   int _frames{0};
 

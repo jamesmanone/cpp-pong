@@ -13,29 +13,36 @@
 #include <thread>
 
 struct pieces {
-  Ball *ball;
-  AIPaddle *aiPaddle;
-  PlayerPaddle *playerPaddle;
+  std::shared_ptr<Ball> ball;
+  std::shared_ptr<AIPaddle> aiPaddle;
+  std::shared_ptr<PlayerPaddle> playerPaddle;
+  std::vector<std::shared_ptr<Drawable>> decorations;
 };
 
-class Game : std::enable_shared_from_this<Game> {
+class Game {
 public:
-  Game(std::shared_ptr<Renderer> renderer);
+  Game(Renderer *renderer);
   ~Game();
 
   void Monitor();
   void Send(SDL_Event &&e);
   void Start();
   void Stop();
+  void Score(Paddle::Type p);
+  int PlayerScore() { return _playerScore; }
+  int ComputerScore() { return _computerScore; }
   
 private:
   void _monitor();
-  std::shared_ptr<Renderer> _renderer;
+
+  Renderer *_renderer;
   pieces _pieces;
-  std::vector<Interactive*> _p;
   MessageQueue<SDL_Event> _q;
-  static const Color _c;
   std::vector<std::thread> _threads;
+
+  int _playerScore{0};
+  int _computerScore{0};
+  static const Color _c;
 
 };
 

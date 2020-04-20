@@ -1,23 +1,16 @@
 #ifndef COLOR_H
 #define COLOR_H
 
-
-
-class Color
-{
+class Color {
 public:
   Color() { }
   Color(int r, int g, int b, int a) : _r(r), _g(g), _b(b), _a(a) { }
   Color(const Color &s) : _r(s.R()), _g(s.G()), _b(s.B()), _a(s.A()) { }
   Color(const Color &&s) : _r(s.R()), _g(s.G()), _b(s.B()), _a(s.A()) { }
-  Color &operator=(const Color &&s) {
-    if(this == &s) return *this;
-    _r = s.R();
-    _g = s.G();
-    _b = s.B();
-    _a = s.A();
-    return *this;
-  }
+  Color &operator=(const Color &&s);
+  Color &operator=(const Color &s);
+  Color &operator--();
+  Color &operator++();
   int R() const { return _r; }
   int G() const { return _g; }
   int B() const { return _b; }

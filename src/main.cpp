@@ -1,5 +1,5 @@
-#include "renderer.h"
-#include "game.h"
+#include "include/renderer.h"
+#include "include/game.h"
 #include <memory>
 #include <iostream>
 #include <thread>
@@ -8,11 +8,9 @@
 
 
 int main() {
-  std::shared_ptr<Renderer> renderer = std::make_shared<Renderer>(800, 600);
-  // Renderer *renderer = new Renderer(800, 600);
-  // renderer->Render();
-  auto game = Game(renderer);
+  Renderer renderer(1024, 768);
+  Game game(&renderer);
   game.Start();
-  // game.waitForGameOver();
+  std::cout << std::endl;
   return 0;
 }
