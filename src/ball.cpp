@@ -4,6 +4,10 @@
 #include <cstdint>
 #include <iostream>
 
+#ifndef INT_MAX
+#define INT_MAX 0xFFFFFFFF
+#endif
+
 Ball& Ball::operator=(const Ball &&s) {
   if(this == &s) return *this;
 
