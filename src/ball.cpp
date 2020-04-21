@@ -1,6 +1,7 @@
 #include "include/ball.h"
 #include "include/game.h"
 #include <cmath>
+#include <cstdint>
 #include <iostream>
 
 Ball& Ball::operator=(const Ball &&s) {

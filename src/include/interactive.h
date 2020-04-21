@@ -4,6 +4,7 @@
 #include <vector>
 #include <chrono>
 #include <thread>
+#include <mutex>
 // #include "game.h"
 
 #ifndef INTERACTIVE_H
