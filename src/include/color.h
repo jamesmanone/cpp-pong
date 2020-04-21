@@ -1,5 +1,6 @@
 #ifndef COLOR_H
 #define COLOR_H
+#include <cstdint> 
 
 class Color {
 public:
@@ -11,15 +12,15 @@ public:
   Color &operator=(const Color &s);
   Color &operator--();
   Color &operator++();
-  int R() const { return _r; }
-  int G() const { return _g; }
-  int B() const { return _b; }
-  int A() const { return _a; }
+  uint8_t R() const { return _r; }
+  uint8_t G() const { return _g; }
+  uint8_t B() const { return _b; }
+  uint8_t A() const { return _a; }
 private:
-  int _r;
-  int _g;
-  int _b;
-  int _a;
+  uint8_t _r;
+  uint8_t _g;
+  uint8_t _b;
+  uint8_t _a;
 };
 
 #endif

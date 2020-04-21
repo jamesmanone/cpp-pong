@@ -18,7 +18,7 @@ Renderer::Renderer(Renderer &&s) :
   _thread = std::move(s._thread);
 }
 
-
+// Most of the constructor code was taken with small modifications from the snakegame code
 Renderer::Renderer(const std::size_t screen_width,
                   const std::size_t screen_height) :
                   screen_width(screen_width),
@@ -62,17 +62,19 @@ void Renderer::Render() {
 }
 
 void Renderer::_render() {
+  auto last = std::chrono::high_resolution_clock::now();
   while(_running) {
 
+    // check for events and send them to Game for handling
     SDL_Event e;
     if(SDL_PollEvent(&e)) _game->Send(std::move(e));
     if(_newScore) UpdateWindowTitle();
 
+    // clear screen
     SDL_SetRenderDrawColor(sdl_renderer, 0x00, 0x05, 0x00, 0xFF);
     SDL_RenderClear(sdl_renderer);
 
     // Render all objects
-
     std::unique_lock<std::mutex> l(_mtx);
     for(auto draw : _drawable) {
       Location l = draw->getLocation();
@@ -83,7 +85,12 @@ void Renderer::_render() {
     }
     l.unlock();
     SDL_RenderPresent(sdl_renderer);
-    std::this_thread::sleep_for(std::chrono::milliseconds(5));
+
+    // max 62.5Hz refresh
+    auto t2 = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double, std::milli> d = t2 - last;
+    last = t2;
+    if(d.count() < 16) std::this_thread::sleep_for(std::chrono::milliseconds(16 - (int)d.count()));
   }
 
 }
@@ -130,6 +137,7 @@ void Renderer::UpdateWindowTitle() {
   std::string p_s = std::to_string(_game->PlayerScore());
   std::string c_s = std::to_string(_game->ComputerScore());
 
+  // copy scores into the output char[] WITHOUT copying the null terminator
   if(p_s.size() == 1) title[1] = p_s[0];
   else memcpy(&title, p_s.c_str(), p_s.size());
 
@@ -140,10 +148,10 @@ void Renderer::UpdateWindowTitle() {
   SDL_SetWindowTitle(sdl_window, title);
 }
 
-void Renderer::SetDrawable(std::vector<std::shared_ptr<Drawable>> i) {
+void Renderer::SetDrawable(std::vector<std::shared_ptr<Drawable>> &i) {
   ClearDrawable();
   std::lock_guard<std::mutex> l(_mtx);
-  for(auto p : i) _drawable.emplace_back(p);
+  for(auto &p : i) _drawable.emplace_back(std::move(p));
 }
 
 

@@ -19,7 +19,7 @@ class Renderer {
   ~Renderer();
 
   void AddDrawable(std::shared_ptr<Drawable> i) { _drawable.emplace_back(i); }
-  void SetDrawable(std::vector<std::shared_ptr<Drawable>> i);
+  void SetDrawable(std::vector<std::shared_ptr<Drawable>> &i);
   void ClearDrawable();
   void SetGamePointer(Game *g) { _game = g; }
   void SetScoreFlag() { _newScore = true; }
